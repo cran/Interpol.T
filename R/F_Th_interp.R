@@ -1,22 +1,23 @@
 NULL
 #' 
 #' The function creates 24 values of hourly temperature from minimum and maximum daily values. This function applies to single series and to single day couples of minimum and maximum temperature. It is called by functions \code{Th_int_series} and \code{shape_calibration}.
-#' The function uses three different curves: from minimum to maximum times: an increasing sinusoidal curve; from maximum time to sunset: a decreasing sinusoidal curve; from sunset to the minimum of the following day: either a horizontal-axis parabola or a line, according to the daily thermal range of the day.
+#' The function uses four different curves: from time 00 to the minimum time: a horizontal-axis parabola (a line, if this choice is enabled and according to the daily thermal range of the day); from minimum to maximum time: an increasing sinusoidal curve; from maximum time to sunset: a decreasing sinusoidal curve; 
+#' from sunset to time = 23: a horizontal-axis parabola (a line, if this choice is enabled and according to the daily thermal range of the day).
 #' Calibration parameters are series- and monthly-specific.
-#' This function is operationally called by \code{Th_int_series}, which requires the daily series and the calibration files as input (plus other parameters). A general user will conveniently use the latter function. 
-#' @title 24-hourly interpolation of temperature
+#' This function is operationally called by \code{Th_int_series}, which requires the daily series and the calibration table as input (plus other parameters). A general user will conveniently use the latter function. 
 #'
+#' @title 24-hourly interpolation of temperature
+#' 
 #' @author  Emanuele Eccel, Emanuele Cordano \email{emanuele.eccel@@iasma.it}
 #' 
-#' @param Tmin  a daily table of 4 named columns, the first are year, month, day, the 4th is minimum temperature. The column names "month" and "T" are mandatory
+#' @param Tmin  a daily table of 4 named columns, the first 3 being year, month, day, the 4th minimum temperature. The column names "month" and "T" are mandatory
 #' @param Tmax  same for Tmax
 #' @param Tsuns  temperature at sunset time
+#' @param Th_24_before  temperature at time 24 of the previous day (time 00 of the present day)
 #' @param day  progressive number of the day (row of both \code{Tmin} and \code{Tmax}), corresponding to a day
 #' @param tab_calibr  "hour" parameter calibration table for the specific series. See \code{\link{par_calibration}}
 #' @param dtr_month  monthly daily thermal range table (see function \code{Mo.Th.Ra.})
-#' @param ratio_dtr  parameter for the choice of the night curve shape
-#' @param delta.T_night  parameter (optional) for the detection and correction of minima occurring at late hours of the day
-
+#' @param ratio_dtr  parameter for the choice of the night curve shape; it is \code{NULL} if no calibration_shape is passed to the function by \code{Th_int_series}
 
 #' @export 
 
@@ -37,19 +38,15 @@ NULL
 #' @note
 #' The function is called by \code{Th_int_series}.
 #'
-#' If the series is one with non-null results of the \code{par_calibration} function (enough data for calibration) its table is passed to the interpolation function, otherwise the average (\code{cal_table}) is used
+#' If the series ID coincides with one with non-null results of the \code{par_calibration} function (enough data for calibration) its table is passed to the interpolation function, otherwise the average (\code{cal_table}) is used.
 #'
-#' \code{delta.T_night}: used only if night_adjust is \code{TRUE}
-#'
-#' \code{delta.T_cl.nig.} is used (passed to function \code{Th_interp}) only if \code{night_adjust} is \code{TRUE}
+#' A non-NULL value for \code{ratio_dtr} enables the function to interpolate night values with a line, if the conditions on Daily Thermal Range occur. This may give rise to a sharp change for the hours following the min.
 #'
 #' Tmin of the day before the first is set = to Tmin of the first day and Tmin of the day after the last = Tmin of the last day.
 #'
-#' Since the first value of T at sunset (of the day before) is \code{NULL}, the first hourly values produced till \code{time_min} are \code{NA}.
+#' Since the first value of T at sunset (of the day before) is \code{NULL}, the first hourly values produced till \code{time_min} are = Tmin.
 
 
-
-#' # interpolates for each series, as called from function \code{Th_int_series}:
 #' @seealso \code{\link{Th_int_list}}
 
 
@@ -60,34 +57,36 @@ NULL
 #########################################################
 
 
-Th_interp<-function(Tmin, Tmax, Tsuns=NULL, day, tab_calibr, dtr_month, ratio_dtr, delta.T_night=NULL)
+Th_interp<-function(Tmin, Tmax, Tsuns=NULL, Th_24_before=NULL, day, tab_calibr, dtr_month=NULL, ratio_dtr=NULL)
 
 {
+
 Th<-NULL
 mm<-Tmin$month[day]
 Tn<-Tmin$T[day] 
 Tx<-Tmax$T[day] 
 Tsuns_d.before<-Tsuns
-if(!is.na(Tmin[day+1,1])) Tn_after<-Tmin$T[day+1] else Tn_after<-Tmin$T[day]
-cloudy_morning<-!is.na(Tx-Tn) & (Tx-Tn)/dtr_month[Tmin$month[day]]<=ratio_dtr  
-cloudy_night<-!is.na(Tx-Tn_after) & (Tx-Tn_after)/dtr_month[Tmin$month[day]]<=ratio_dtr 
+if(!is.na(Tmin[day+1,4])) Tn_after<-Tmin$T[day+1] else Tn_after<-Tmin$T[day]
+if(!is.null(ratio_dtr)) {
+ cloudy_morning<-!is.na(Tx-Tn) & (Tx-Tn)/dtr_month[Tmin$month[day]]<=ratio_dtr  
+ cloudy_night<-!is.na(Tx-Tn_after) & (Tx-Tn_after)/dtr_month[Tmin$month[day]]<=ratio_dtr  }
 Tsuns<-Tx - tab_calibr$C_m[mm]*(Tx-Tn_after)  
 time_min<-tab_calibr$time_min[mm]
 time_max<-tab_calibr$time_max[mm]
 time_suns<-tab_calibr$time_suns[mm]
-Th_24_before <- Tn
-Tn_after <- Tn
+if(is.null(Th_24_before))
+ Th_24_before <- Tn
 
+# begins interpolation
 
-# h = 0 to min
+# h = 00 to min
+z<-0.5 
 Tn_original<-Tn
-if(cloudy_morning==TRUE){z<-1} else z<-0.5 
-if(!is.null(delta.T_night) )  
- if(Tn < Th_24_before - delta.T_night & !is.na(Th_24_before))
-  Tn <- Th_24_before - delta.T_night
-b_d.before<-(Tn-Tsuns_d.before)/((time_min + 24-time_suns)^z)
+if(!is.null(ratio_dtr))
+ if(cloudy_morning==TRUE) z<-1 
+b<-(Tn-Th_24_before)/(time_min^z)
 for(h in 0:(time_min))  #  Th[1] = Th at time h = 0 and so on
- Th[h+1]<-Tsuns_d.before + b_d.before*((h+24-time_suns)^z)
+ Th[h+1]<-Th_24_before + b*((h)^z)
 
 # h = min to max
 for(h in time_min:time_max) 
@@ -98,18 +97,23 @@ for(h in (time_max):(time_suns))
  Th[h+1]<- Tsuns + (Tx-Tsuns)*sin(pi/2*(1+(h-time_max)/(time_suns-time_max)))     
 
 # h = sunset to 23
-if(cloudy_night==TRUE) {z<-1} else z<-0.5  
-if(!is.null(delta.T_night) )  # apply the correction
- if(Tn_after  > Tn_original - delta.T_night & !is.na(Tn_original > Tn_after) )
-   Tn_after <- Tn_original - delta.T_night
+z<-0.5 
+if(!is.null(ratio_dtr))
+ if(cloudy_night==TRUE) z<-1 
 b<-(Tn_after - Tsuns) / ((time_min + 24-time_suns)^z)
 for(h in time_suns:23)
  Th[h+1]<-Tsuns + b*((h-time_suns)^z)
-Th_24_before<-Th[24]
- 
-Th_day.before<-Th 
+Th_24_before<-Tsuns + b*((24-time_suns)^z)
+# checks if T[23] is lower than Tmin: in this case, re-calculates the last period
+if(!is.na(Th[24] < Tn) &  Th[24] < Tn)
+{
+b<-(Tn - Tsuns) / ((23-time_suns)^z) 
+for(h in time_suns:23)
+ Th[h+1]<-Tsuns + b*((h-time_suns)^z)
+Th_24_before<-Tsuns + b*((24-time_suns)^z)
+}
 
-Th_list<-list(Th,Tsuns); names(Th_list)<-c("Th", "Tsuns")
+Th_list<-list(Th,Tsuns,Th_24_before); names(Th_list)<-c("Th", "Tsuns","Th_24_before")
 
 return(Th_list)
 

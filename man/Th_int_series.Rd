@@ -2,16 +2,17 @@
 \alias{Th_int_series}
 \title{Hourly interpolation of multiple daily temperature series}
 \usage{
-  Th_int_series(cal_times, cal_shape, TMIN, TMAX,
-    start_year, end_year, night_adjust = FALSE,
-    active_IDs = NULL, min_mo.length = 21, silent = FALSE)
+  Th_int_series(cal_times, TMIN, TMAX, start_year,
+    end_year, cal_shape = NULL, active_IDs = NULL,
+    min_mo.length = 21, silent = FALSE)
 }
 \arguments{
   \item{cal_times}{calibration table of "time" parameters
   for the specific series}
 
-  \item{cal_shape}{calibration table for "shape"
-  parameter(s) for the specific series}
+  \item{cal_shape}{calibration table for "shape" parameter
+  for the specific series; default is \code{NULL}(don't
+  use)}
 
   \item{TMIN}{minimum temperature daily table}
 
@@ -21,17 +22,13 @@
 
   \item{end_year}{year of simulation end}
 
-  \item{night_adjust}{logical: if set to \code{TRUE}
-  applies the correction for minima occurring at late hours
-  of the day}
-
   \item{active_IDs}{a set of series IDs to be interpolated.
   If \code{NULL} (default), all series are interpolated}
 
   \item{min_mo.length}{minimum number of days necessary to
   calculate monthly dtr values}
 
-  \item{silent}{logical, if set to \code{TRUE} suppresses
+  \item{silent}{logical: if set to \code{TRUE} suppresses
   any warning issue}
 }
 \value{
@@ -52,14 +49,11 @@
   irrespective of their order. Data series range from
   column 4 to the last.
 
-  If the series is one with non-null results of the
-  \code{par_calibration} function (enough data for
+  If the series ID coincides with one with non-null results
+  of the \code{par_calibration} function (enough data for
   calibration) its table is passed to the interpolation
   function, otherwise the average (\code{cal_table}) is
   used.
-
-  \code{delta.T_night} is used only if night_adjust is
-  \code{TRUE}.
 
   Tmin of the day before the first is set = to Tmin of the
   first day and Tmin of the day after the last = Tmin of
@@ -67,12 +61,12 @@
 
   Since the first value of T at sunset (of the day before)
   is \code{NULL}, the first hourly values produced till
-  \code{time_min} are \code{NA}.
+  \code{time_min} are = Tmin.
 }
 \examples{
 data(Trentino_hourly_T)
 stations <- c("T0001","T0010","T0129")
-# interpolation of temperature for series T0001 and T0129, from 1970 to 1972
+# interpolation of temperature for series T0001 and T0129, from 2004 to 2005
 Th_int_list <- Th_int_series(cal_times = calibration_l, cal_shape = calibration_shape, TMIN=Tn, TMAX=Tx, start_year = 2004, end_year = 2005, active_IDs = stations)
 }
 \author{

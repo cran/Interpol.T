@@ -4,8 +4,8 @@
 \usage{
   shape_calibration(meas, date.format = "ymd",
     cal_times_list, band_min = 0:23, band_max = 0:23,
-    ratio_dtr_range = c(0, 6), delta.night_range = NULL,
-    nr_cycles = 10, min_mo.length = 21, silent = FALSE)
+    ratio_dtr_range = c(0, 6), nr_cycles = 10,
+    min_mo.length = 21, silent = FALSE)
 }
 \arguments{
   \item{meas}{measured hourly values file (table), where
@@ -26,9 +26,6 @@
   \item{ratio_dtr_range}{range for seeking the optimal
   value of \code{ratio_dtr}}
 
-  \item{delta.night_range}{range for seeking the optimal
-  value of \code{delta.T_night}}
-
   \item{nr_cycles}{number of calibration trials within the
   calibration ranges (all)}
 
@@ -41,17 +38,13 @@
 }
 \value{
   A list containing the optimum values of \code{ratio_dtr}
-  and (if not excluded) \code{delta.T_night}
 }
 \description{
   Calibrates the shape of the night interpolating curve,
   either horizontal-axe parabola or line, by changing the
   exponent z (see reference). It functions according to the
   comparison of the daily thermal range and the climate
-  (reference) monthly one. If required, it also calibrates
-  the correction the night part of the curves when minimum
-  temperature is suspected of occurring during late hours
-  of the day.
+  (reference) monthly one.
 }
 \note{
   \code{meas} must be organized as 4-field records, all
@@ -69,9 +62,9 @@
   were calculated in the daily series to be interpolated.
   In general, they range from 0 to 23, unless the series
   has had some restriction in the calculation of minimum
-  and maximum values. Hence, these band can be different
-  from the ones used to calibrate the most frequent
-  occurrence of min and max.
+  and maximum values. Hence, these bands can be different
+  from those used to calibrate the most frequent occurrence
+  of min and max.
 
   The optimal value of \code{ratio_dtr} (\code{k}, eq. 7,
   in the quoted reference Eccel (2010a)) is chosen as the
@@ -80,28 +73,19 @@
   between the daily thermal range of the day to be
   interpolated and the mean monthly value for that series.
   The corresponding values of mean absolute error and RMSE
-  can be checked in the resulting list. The same is true
-  for \code{delta.T_night}. This optional feature is not
-  described in the quoted reference. If the night
-  temperature decrease less than \code{delta.T_night}
-  (either at the early and late hours of the day) the
-  minimum temperature is shifted to h=24 and morning
-  minimum T is calculated by subtracting
-  \code{delta.T_night} to the T value at h=24 of the
-  previous day. The improvement allowed by this option is
-  small.
+  can be checked in the resulting list.
 
   min_mo.length (passed to function Mo.Th.Ra.) refers to
   the sum of days along all the series for each specific
   month, not for any single month in one year.
 }
 \examples{
+library(Interpol.T)
 data(Trentino_hourly_T)
 
 stations <- c("T0001","T0010","T0129")
 
-# carries out the second calibration step by analysis of hourly calibration files
-calibration_shape <- shape_calibration(meas = h_d_t[h_d_t$V1 \%in\% stations,], cal_times_list = calibration_l[stations], band_min = 0:23, band_max = 0:23, ratio_dtr_range = c(0,4), delta.night_range = c(-2,2), min_mo.length=21)
+calibration_shape <- shape_calibration(meas = h_d_t[h_d_t$V1 \%in\% stations,], cal_times_list = calibration_l[stations], band_min = 0:23, band_max = 0:23, ratio_dtr_range = c(0,4), min_mo.length=21)
 }
 \author{
   Emanuele Eccel, Emanuele Cordano

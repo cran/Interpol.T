@@ -72,9 +72,9 @@ names(T_meas_hourly)<-c("ID", "year", "month", "day", "hour","T")
 if(is.null(cal_period[1])) period<-c(min(T_meas_hourly$year, na.rm=TRUE), max(T_meas_hourly$year, na.rm=TRUE))  else {
   period<- c(cal_period[1], cal_period[length(cal_period)])
   if(cal_period[1] < min(T_meas_hourly$year)) {
-    period[1]<-cal_period[1]; print("Warning: calibration start year forced to first year of hourly data", quote=F)  }
+    period[1]<-cal_period[1]; print("Warning: calibration start year forced to first year of hourly data", quote=FALSE)  }
   if(cal_period[length(cal_period)] > max(T_meas_hourly$year, na.rm=TRUE)) {
-    period[2]<-cal_period[length(cal_period)]; print("Warning: calibration end year forced to last year of hourly data", quote=F)  }
+    period[2]<-cal_period[length(cal_period)]; print("Warning: calibration end year forced to last year of hourly data", quote=FALSE)  }
  } # else  
 T_meas_hourly<-subset(T_meas_hourly, T_meas_hourly$year %in% period)
 

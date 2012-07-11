@@ -60,13 +60,13 @@ data<-date.mdy(data.date)
 T_meas_hourly[,4][T_meas_hourly[,4]==missing_code]<-NA
 names(T_meas_hourly)<-c("ID", "date", "hour","T")
 if(min(data.date) > as.date(chart.start) | max(data.date) < as.date(chart.end))
-  print(paste(sta, "Warning: required period of instrumental recording exceeds data availability"), quote=F)
+  print(paste(sta, "Warning: required period of instrumental recording exceeds data availability"), quote=FALSE)
 T_meas_x.graph<-T_meas_hourly[data.date>= as.date(chart.start) & data.date<= as.date(chart.end),]
 
 # selects and filters simulations
 data.date<-as.date(paste(sim$Date$year,sim$Date$month, sim$Date$day, sep="/"), order=date.format)
 if(min(data.date) > as.date(chart.start) | max(data.date) < as.date(chart.end))
-  print(paste(sta, "Warning: required simulation period exceeds data availability"), quote=F)
+  print(paste(sta, "Warning: required simulation period exceeds data availability"), quote=FALSE)
 T_sim_x.graph<-sim[[sta]][data.date>= as.date(chart.start) & data.date<= as.date(chart.end)]
 
 if(sum(!is.na(T_sim_x.graph))>0 & sum(!is.na(T_meas_x.graph$T))>0 )  # there are data

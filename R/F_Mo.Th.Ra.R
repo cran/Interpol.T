@@ -38,27 +38,27 @@ Mo.Th.Ra.<-function(Tmin, Tmax, name, min_mo.length= 21, silent=FALSE)
 
 {
 
-mens_Tn<-aggregate(Tmin, by=list(Tmin$month), FUN=mean, na.rm=T); mens_Tx<-aggregate(Tmax, by=list(Tmax$month), FUN=mean, na.rm=T)
+mens_Tn<-aggregate(Tmin, by=list(Tmin$month), FUN=mean, na.rm=TRUE); mens_Tx<-aggregate(Tmax, by=list(Tmax$month), FUN=mean, na.rm=TRUE)
 dtr<-(mens_Tx - mens_Tn)[,5]
 # cuts dtr values calculated with too few data
 Tmin_nna<-Tmin[!is.na(Tmin$T),]
 if(nrow(Tmin_nna) > 0) {
  mo.length<-aggregate(Tmin_nna$T, by=list(Tmin_nna$month, Tmin_nna$year), FUN=length)
- mo.length.mean<-aggregate(mo.length$x, by=list(mo.length$Group.1), FUN=sum, na.rm=T)
+ mo.length.mean<-aggregate(mo.length$x, by=list(mo.length$Group.1), FUN=sum, na.rm=TRUE)
  dtr[mo.length.mean$x < min_mo.length]<-NA  }
 
 # checks missing terms and substitutes with previous months where possible
 dtr_corr<-dtr
 for(j in 2:12)
- if(is.na(dtr[j]) & !is.na(dtr[j-1])) {dtr_corr[j]<-dtr_corr[j-1]; if(silent==FALSE) print(paste(name, "Warning: dtr for month", j, "forced to dtr for month", j-1, "due to lack of valid data"), quote=F)}
-if(is.na(dtr[1]) & !is.na(dtr[12])) {dtr_corr[1]<-dtr_corr[12]; if(silent==FALSE) print(paste(name, "Warning: dtr for month 1 forced to dtr for month 12 due to lack of valid data"), quote=F)}
+ if(is.na(dtr[j]) & !is.na(dtr[j-1])) {dtr_corr[j]<-dtr_corr[j-1]; if(silent==FALSE) print(paste(name, "Warning: dtr for month", j, "forced to dtr for month", j-1, "due to lack of valid data"), quote=FALSE)}
+if(is.na(dtr[1]) & !is.na(dtr[12])) {dtr_corr[1]<-dtr_corr[12]; if(silent==FALSE) print(paste(name, "Warning: dtr for month 1 forced to dtr for month 12 due to lack of valid data"), quote=FALSE)}
 dtr<-dtr_corr
 if(sum(is.na(dtr))!=0)  # still missing terms: tries with successive months
 for(j in 1:11)
- if(is.na(dtr[j]) & !is.na(dtr[j+1])) {dtr_corr[j]<-dtr_corr[j+1]; if(silent==FALSE) print(paste(name, "Warning: dtr for month", j, "forced to dtr for month", j+1, "due to lack of valid data"), quote=F)} 
+ if(is.na(dtr[j]) & !is.na(dtr[j+1])) {dtr_corr[j]<-dtr_corr[j+1]; if(silent==FALSE) print(paste(name, "Warning: dtr for month", j, "forced to dtr for month", j+1, "due to lack of valid data"), quote=FALSE)} 
 dtr<-dtr_corr
 if(sum(is.na(dtr))!=0)  # still missing terms: no other substitution possible
- if(silent==FALSE) print(paste(name, "Warning: too few valid data for estimation of missing dtr terms"), quote=F)
+ if(silent==FALSE) print(paste(name, "Warning: too few valid data for estimation of missing dtr terms"), quote=FALSE)
 
 return(dtr)
 

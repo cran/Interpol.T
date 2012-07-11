@@ -1,8 +1,7 @@
-# file hourly_interp_T.R
-# 
+#
 # This file contains a script example to run a temperature interpolation with the package "Intepol.T"
 #
-# Author: Emanuele Eccel - 31-01-2012
+# Author: Emanuele Eccel - 10-07-2012
 #
 #This program is free software: you can redistribute it and/or modify
 #it under the terms of the GNU General Public License as published by
@@ -25,11 +24,12 @@ rm(list=ls())
 library(Interpol.T)
 data(Trentino_hourly_T)
 
-###########################################
+#####################################################
 # 1.
 # CALIBRATION OF INTERPOLATION PARAMETERS
 # HOURS OF MIN, MAX, SUNSET, COEFF. "c"
-###########################################
+# (SKIP IF CALIBRATION TABLES ARE ALREADY AVAILABLE)
+#####################################################
 
 # set up parameters to be passed to function "par_calibration"
 m_v_c<- -999.9   # missing value
@@ -44,17 +44,17 @@ a_s<-c("T0147", "T0149", "T0150", "T0152", "T0154", "T0169","T0370") # series on
 calibration_l<-par_calibration(meas=h_d_t, missing_value_code=m_v_c, min_valid_yrs=m_v_y, band_min=b_n, band_max=b_x, band_suns=b_s, date.format="ymd", silent=FALSE, aver_series=a_s, cal_period=c_p)
 
 
-###########################################
+##############################################################
 # 2. 
 # CALIBRATION OF INTERPOLATION PARAMETERS
-# DEFINITION OF ratio/dtr AND delta.T_night
-###########################################
+# DEFINITION OF ratio_dtr 
+# (SKIP IF CALIBRATION TABLES ARE ALREADY AVAILABLE OR IF
+# THE NIGHT-CURVE SHAPE CALIBR. IS NOT GOING TO BE USED)
+##############################################################
 
 ratio_dtr_r <- c(0,4)      # range of values for calibration of ratio_dtr
-delta.night_r <- c(-2,2)   # range of values for calibration of delta.T_night
 
-calibration_shape<-shape_calibration(meas=h_d_t, cal_times_list=calibration_l, band_min=0:23, band_max=0:23, ratio_dtr_range=ratio_dtr_r, delta.night_range=delta.night_r, min_mo.length=21)
-
+calibration_shape<-shape_calibration(meas=h_d_t, cal_times_list=calibration_l, band_min=0:23, band_max=0:23, ratio_dtr_range=ratio_dtr_r, min_mo.length=21)
 
 ###########################################
 # 3. 
@@ -62,12 +62,10 @@ calibration_shape<-shape_calibration(meas=h_d_t, cal_times_list=calibration_l, b
 ###########################################
 
 
-
-
 start<-2004       # start of interpolation period
 end<-2005         # end of interpolation period
 
-Th_int_list<-Th_int_series(cal_times=calibration_l, cal_shape=calibration_shape, TMIN=Tn, TMAX=Tx, start_year=start, end_year=end, night_adjust=FALSE)
+Th_int_list<-Th_int_series(cal_times=calibration_l, TMIN=Tn, TMAX=Tx, start_year=start, end_year=end)
 
 
 ###########################################
@@ -76,22 +74,22 @@ Th_int_list<-Th_int_series(cal_times=calibration_l, cal_shape=calibration_shape,
 ###########################################
 
 
-# generate the daily means from the hourly tables
+# generates the daily means from the hourly tables
 
 Tm_list<-daily_mean(hourly_list=Th_int_list, series_names=NULL)
 
 
-# calculate the bias between average of 24 hourly values and (Tmin + Tmax)/2
+# calculates the bias between average of 24 hourly values and (Tmin + Tmax)/2
 
 mo_bias<-bias(TMIN=Tn, TMAX=Tx, TMEAN=Tm_list, min_valid=20)
 
-plot(mo_bias$AVERAGE)
-hist(mo_bias$AVERAGE)
+plot(mo_bias$AVERAGE[1:12], main= "(Tn+Tx)/2 - mean(24 values)", xlab="MONTH", ylab="DELTA T [degC]")
+hist(mo_bias$AVERAGE[1:12], main= "Hist. of freq. (months) of delta.means", xlab="(Tn+Tx)/2 - mean(24 values)")
 
-# plot charts for comparison between measured and simulated
+# plots charts for comparison between measured and simulated
 
-m_v_c<- -999.9           # missing value
+m_v_c<- -999.9           # missing value code
 start <- "1Jan2004"      # start date of charts
 end <- "31Jan2004"       # end date of charts
 
-plot_meas_sim(meas=h_d_t, sim= Th_int_list, missing_code=m_v_c, chart.start=start, chart.end=end, leg.pos="top")
+plot_meas_sim(meas=h_d_t, sim= Th_int_list, missing_code=m_v_c, chart.start=start, chart.end=end, leg.pos="topright")

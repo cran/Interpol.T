@@ -2,17 +2,20 @@
 \alias{Th_interp}
 \title{24-hourly interpolation of temperature}
 \usage{
-  Th_interp(Tmin, Tmax, Tsuns = NULL, day, tab_calibr,
-    dtr_month, ratio_dtr, delta.T_night = NULL)
+  Th_interp(Tmin, Tmax, Tsuns = NULL, Th_24_before = NULL,
+    day, tab_calibr, dtr_month = NULL, ratio_dtr = NULL)
 }
 \arguments{
-  \item{Tmin}{a daily table of 4 named columns, the first
-  are year, month, day, the 4th is minimum temperature. The
+  \item{Tmin}{a daily table of 4 named columns, the first 3
+  being year, month, day, the 4th minimum temperature. The
   column names "month" and "T" are mandatory}
 
   \item{Tmax}{same for Tmax}
 
   \item{Tsuns}{temperature at sunset time}
+
+  \item{Th_24_before}{temperature at time 24 of the
+  previous day (time 00 of the present day)}
 
   \item{day}{progressive number of the day (row of both
   \code{Tmin} and \code{Tmax}), corresponding to a day}
@@ -24,11 +27,8 @@
   function \code{Mo.Th.Ra.})}
 
   \item{ratio_dtr}{parameter for the choice of the night
-  curve shape}
-
-  \item{delta.T_night}{parameter (optional) for the
-  detection and correction of minima occurring at late
-  hours of the day}
+  curve shape; it is \code{NULL} if no calibration_shape is
+  passed to the function by \code{Th_int_series}}
 }
 \value{
   A vector containing the values from hour = 0 (element 1)
@@ -40,33 +40,34 @@
   to single series and to single day couples of minimum and
   maximum temperature. It is called by functions
   \code{Th_int_series} and \code{shape_calibration}. The
-  function uses three different curves: from minimum to
-  maximum times: an increasing sinusoidal curve; from
-  maximum time to sunset: a decreasing sinusoidal curve;
-  from sunset to the minimum of the following day: either a
-  horizontal-axis parabola or a line, according to the
-  daily thermal range of the day. Calibration parameters
-  are series- and monthly-specific. This function is
-  operationally called by \code{Th_int_series}, which
-  requires the daily series and the calibration files as
-  input (plus other parameters). A general user will
-  conveniently use the latter function.
+  function uses four different curves: from time 00 to the
+  minimum time: a horizontal-axis parabola (a line, if this
+  choice is enabled and according to the daily thermal
+  range of the day); from minimum to maximum time: an
+  increasing sinusoidal curve; from maximum time to sunset:
+  a decreasing sinusoidal curve; from sunset to time = 23:
+  a horizontal-axis parabola (a line, if this choice is
+  enabled and according to the daily thermal range of the
+  day). Calibration parameters are series- and
+  monthly-specific. This function is operationally called
+  by \code{Th_int_series}, which requires the daily series
+  and the calibration table as input (plus other
+  parameters). A general user will conveniently use the
+  latter function.
 }
 \note{
   The function is called by \code{Th_int_series}.
 
-  If the series is one with non-null results of the
-  \code{par_calibration} function (enough data for
+  If the series ID coincides with one with non-null results
+  of the \code{par_calibration} function (enough data for
   calibration) its table is passed to the interpolation
   function, otherwise the average (\code{cal_table}) is
-  used
+  used.
 
-  \code{delta.T_night}: used only if night_adjust is
-  \code{TRUE}
-
-  \code{delta.T_cl.nig.} is used (passed to function
-  \code{Th_interp}) only if \code{night_adjust} is
-  \code{TRUE}
+  A non-NULL value for \code{ratio_dtr} enables the
+  function to interpolate night values with a line, if the
+  conditions on Daily Thermal Range occur. This may give
+  rise to a sharp change for the hours following the min.
 
   Tmin of the day before the first is set = to Tmin of the
   first day and Tmin of the day after the last = Tmin of
@@ -74,8 +75,7 @@
 
   Since the first value of T at sunset (of the day before)
   is \code{NULL}, the first hourly values produced till
-  \code{time_min} are \code{NA}. # interpolates for each
-  series, as called from function \code{Th_int_series}:
+  \code{time_min} are = Tmin.
 }
 \author{
   Emanuele Eccel, Emanuele Cordano
