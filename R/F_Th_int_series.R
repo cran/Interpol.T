@@ -15,6 +15,7 @@ NULL
 #' @param end_year  year of simulation end
 #' @param active_IDs  a set of series IDs to be interpolated. If \code{NULL} (default), all series are interpolated
 #' @param min_mo.length minimum number of days necessary to calculate monthly dtr values
+#' @param full.24.hrs.span_min logical, if set to \code{FALSE} does not allow to shift minimum time to the late hours of the day
 #' @param silent logical: if set to \code{TRUE} suppresses any warning issue
 
 
@@ -39,12 +40,15 @@ NULL
 #'
 #' If the series ID coincides with one with non-null results of the \code{par_calibration} function (enough data for calibration) its table is passed to the interpolation function, otherwise the average (\code{cal_table}) is used.
 #'
+#' \code{full.24.hrs.span_min} is \code{TRUE} as default. If must be set to \code{FALSE} only if minimum values of the daily series have been calculated on a restricted time band, which is included in \code{band_min} (see function \code{par_calibration}).
+#' If this is the case, the minimum of the interpolated curve will always fall within \code{band_min} (early hours of the day). If this option is erroneously chosen, errors as large as 0.6 deg C can arise in the average of mean daily T.
+#'
 #' Tmin of the day before the first is set = to Tmin of the first day and Tmin of the day after the last = Tmin of the last day.
 #'
 #' Since the first value of T at sunset (of the day before) is \code{NULL}, the first hourly values produced till \code{time_min} are = Tmin.
 
 #' @examples
-# library(Interpol.T)
+#' library(Interpol.T)
 #' data(Trentino_hourly_T)
 #' stations <- c("T0001","T0010","T0129")
 #' # interpolation of temperature for series T0001 and T0129, from 2004 to 2005
@@ -57,7 +61,7 @@ NULL
 # INTERPOLATES DAILY TEMPERATURE **SERIES**, MORE SERIES AT ONCE 
 ###################################################################
 
-Th_int_series <- function(cal_times, TMIN, TMAX, start_year, end_year, cal_shape=NULL, active_IDs=NULL, min_mo.length=21, silent=FALSE)
+Th_int_series <- function(cal_times, TMIN, TMAX, start_year, end_year, cal_shape=NULL, active_IDs=NULL, min_mo.length=21, full.24.hrs.span_min=TRUE, silent=FALSE)
 
 {
 
@@ -109,7 +113,7 @@ for(d in 1:nrow(Tmin))
  {  
  if(exists("Th_l")) 
  { Ts<-Th_l$Tsuns; T24_bf <- Th_l$Th_24_before } else {Ts<-NULL; T24_bf<-NULL}
- Th_l<-Th_interp(Tmin=Tmin, Tmax=Tmax, day=d, Tsuns=Ts, Th_24_before=T24_bf, tab_calibr=calibr, dtr_month=dtr, ratio_dtr=r_dtr)
+ Th_l<-Th_interp(Tmin=Tmin, Tmax=Tmax, day=d, Tsuns=Ts, Th_24_before=T24_bf, tab_calibr=calibr, dtr_month=dtr, ratio_dtr=r_dtr, late_min=full.24.hrs.span_min)
  Th<-Th_l$Th
  Th_int<-append(Th_int, round(Th,1))
  }

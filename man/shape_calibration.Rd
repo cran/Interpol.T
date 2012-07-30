@@ -5,7 +5,8 @@
   shape_calibration(meas, date.format = "ymd",
     cal_times_list, band_min = 0:23, band_max = 0:23,
     ratio_dtr_range = c(0, 6), nr_cycles = 10,
-    min_mo.length = 21, silent = FALSE)
+    min_mo.length = 21, full.24.hrs.span_min = TRUE,
+    silent = FALSE)
 }
 \arguments{
   \item{meas}{measured hourly values file (table), where
@@ -32,6 +33,10 @@
   \item{min_mo.length}{minimum number of days to calculate
   any monthly values of dtr (is passed to function
   \code{\link{Mo.Th.Ra.}})}
+
+  \item{full.24.hrs.span_min}{logical, if set to
+  \code{FALSE} does not allow to shift minimum time to the
+  late hours of the day}
 
   \item{silent}{logical, if set to \code{TRUE} suppresses
   any warning issue}
@@ -75,9 +80,20 @@
   The corresponding values of mean absolute error and RMSE
   can be checked in the resulting list.
 
-  min_mo.length (passed to function Mo.Th.Ra.) refers to
-  the sum of days along all the series for each specific
-  month, not for any single month in one year.
+  \code{min_mo.length} (passed to function
+  \code{Mo.Th.Ra.}) refers to the sum of days along all the
+  series for each specific month, not for any single month
+  in one year.
+
+  \code{full.24.hrs.span_min} is \code{TRUE} as default. If
+  must be set to \code{FALSE} only if minimum values of the
+  daily series have been calculated on a restricted time
+  band, which is included in \code{band_min} (see function
+  \code{par_calibration}). If this is the case, the minimum
+  of the interpolated curve will always fall within
+  \code{band_min} (early hours of the day). If this option
+  is erroneously chosen, errors as large as 0.6 deg C can
+  arise in the average of mean daily T.
 }
 \examples{
 library(Interpol.T)

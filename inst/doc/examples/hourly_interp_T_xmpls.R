@@ -54,7 +54,7 @@ calibration_l<-par_calibration(meas=h_d_t, missing_value_code=m_v_c, min_valid_y
 
 ratio_dtr_r <- c(0,4)      # range of values for calibration of ratio_dtr
 
-calibration_shape<-shape_calibration(meas=h_d_t, cal_times_list=calibration_l, band_min=0:23, band_max=0:23, ratio_dtr_range=ratio_dtr_r, min_mo.length=21)
+calibration_shape<-shape_calibration(meas=h_d_t, cal_times_list=calibration_l, band_min=0:23, band_max=0:23, ratio_dtr_range=ratio_dtr_r, min_mo.length=21, full.24.hrs.span_min=TRUE)
 
 ###########################################
 # 3. 
@@ -65,7 +65,7 @@ calibration_shape<-shape_calibration(meas=h_d_t, cal_times_list=calibration_l, b
 start<-2004       # start of interpolation period
 end<-2005         # end of interpolation period
 
-Th_int_list<-Th_int_series(cal_times=calibration_l, TMIN=Tn, TMAX=Tx, start_year=start, end_year=end)
+Th_int_list<-Th_int_series(cal_times=calibration_l, TMIN=Tn, TMAX=Tx, start_year=start, end_year=end, full.24.hrs.span_min=TRUE)
 
 
 ###########################################

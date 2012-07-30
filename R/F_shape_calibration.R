@@ -15,6 +15,7 @@ NULL
 #' @param ratio_dtr_range range for seeking the optimal value of \code{ratio_dtr}
 #' @param nr_cycles number of calibration trials within the calibration ranges (all)
 #' @param min_mo.length minimum number of days to calculate any monthly values of dtr (is passed to function \code{\link{Mo.Th.Ra.}})
+#' @param full.24.hrs.span_min logical, if set to \code{FALSE} does not allow to shift minimum time to the late hours of the day
 #' @param silent logical, if set to \code{TRUE} suppresses any warning issue
 #' 
 
@@ -43,7 +44,10 @@ NULL
 #'
 #' The optimal value of \code{ratio_dtr} (\code{k}, eq. 7, in the quoted reference Eccel (2010a)) is chosen as the one with the (absolute) minimum value of the bias (irrespective of its sign). \code{ratio_dtr} is the ratio between the daily thermal range of the day to be interpolated and the mean monthly value for that series. The corresponding values of mean absolute error and RMSE can be checked in the resulting list. 
 #'
-#' min_mo.length (passed to function Mo.Th.Ra.) refers to the sum of days along all the series for each specific month, not for any single month in one year.
+#' \code{min_mo.length} (passed to function \code{Mo.Th.Ra.}) refers to the sum of days along all the series for each specific month, not for any single month in one year.
+#'
+#' \code{full.24.hrs.span_min} is \code{TRUE} as default. If must be set to \code{FALSE} only if minimum values of the daily series have been calculated on a restricted time band, which is included in \code{band_min} (see function \code{par_calibration}).
+#' If this is the case, the minimum of the interpolated curve will always fall within \code{band_min} (early hours of the day). If this option is erroneously chosen, errors as large as 0.6  deg C can arise in the average of mean daily T.
 
 
 #' @examples
@@ -63,7 +67,7 @@ NULL
 ###################################################
 
 
-shape_calibration<- function(meas, date.format="ymd", cal_times_list, band_min=0:23, band_max=0:23, ratio_dtr_range=c(0,6),  nr_cycles=10, min_mo.length=21, silent=FALSE)
+shape_calibration<- function(meas, date.format="ymd", cal_times_list, band_min=0:23, band_max=0:23, ratio_dtr_range=c(0,6),  nr_cycles=10, min_mo.length=21, full.24.hrs.span_min=TRUE,  silent=FALSE)
 
 {
 
@@ -132,7 +136,7 @@ for(day in 1:(nrow(Tmin)-1))
  {  
  if(exists("Th_l")) 
  { Ts<-Th_l$Tsuns; T24_bf <- Th_l$Th_24_before } else {Ts<-NULL; T24_bf<-NULL}
- Th_l<-Th_interp(Tmin=Tmin, Tmax=Tmax, Tsuns=Ts, Th_24_before=T24_bf, day=day, tab_calibr=calibr, dtr_month=dtr, ratio_dtr=ratio_dtr[k])
+ Th_l<-Th_interp(Tmin=Tmin, Tmax=Tmax, Tsuns=Ts, Th_24_before=T24_bf, day=day, tab_calibr=calibr, dtr_month=dtr, ratio_dtr=ratio_dtr[k], late_min=full.24.hrs.span_min)
  Th<-Th_l$Th
  Th_simul<-append(Th_simul, round(Th,1))
  }
@@ -171,7 +175,7 @@ calibration_shape<-list(ratio=calibration_shape_ratio)
 
 if(!silent) {
 print("",quote=FALSE)
-print("Calibration of ratio_dtr completed successfullyyy!", quote=FALSE)
+print("Calibration of ratio_dtr completed successfully!", quote=FALSE)
 print("",quote=FALSE) }
 
 calibration_shape<-list(ratio=calibration_shape_ratio)

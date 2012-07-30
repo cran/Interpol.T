@@ -3,7 +3,8 @@
 \title{24-hourly interpolation of temperature}
 \usage{
   Th_interp(Tmin, Tmax, Tsuns = NULL, Th_24_before = NULL,
-    day, tab_calibr, dtr_month = NULL, ratio_dtr = NULL)
+    day, tab_calibr, dtr_month = NULL, ratio_dtr = NULL,
+    late_min = TRUE)
 }
 \arguments{
   \item{Tmin}{a daily table of 4 named columns, the first 3
@@ -29,6 +30,12 @@
   \item{ratio_dtr}{parameter for the choice of the night
   curve shape; it is \code{NULL} if no calibration_shape is
   passed to the function by \code{Th_int_series}}
+
+  \item{late_min}{logical; allows to shift the time of
+  occurrence of minima to the late hours of the day
+  (assumes the value of \code{full.24.hrs.span_min}, passed
+  by functions \code{Th_int_series)} and
+  \code{shape_calibration})}
 }
 \value{
   A vector containing the values from hour = 0 (element 1)
@@ -73,9 +80,16 @@
   first day and Tmin of the day after the last = Tmin of
   the last day.
 
-  Since the first value of T at sunset (of the day before)
-  is \code{NULL}, the first hourly values produced till
-  \code{time_min} are = Tmin.
+  If T from sunset falls below the minimum of the day
+  (temptatively attributed to \code{time_min}), an
+  adjustement is done: the early hours assume a constant T
+  = T[00] and the minimum is shifted so that T[23] =
+  \code{Tmin} for that day
+
+  Since the very first value of T series at sunset (of the
+  day before) is \code{NULL}, the first hourly values
+  produced till \code{time_min} are = \code{Tmin} of the
+  day.
 }
 \author{
   Emanuele Eccel, Emanuele Cordano

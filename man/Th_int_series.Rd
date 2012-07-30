@@ -4,7 +4,8 @@
 \usage{
   Th_int_series(cal_times, TMIN, TMAX, start_year,
     end_year, cal_shape = NULL, active_IDs = NULL,
-    min_mo.length = 21, silent = FALSE)
+    min_mo.length = 21, full.24.hrs.span_min = TRUE,
+    silent = FALSE)
 }
 \arguments{
   \item{cal_times}{calibration table of "time" parameters
@@ -27,6 +28,10 @@
 
   \item{min_mo.length}{minimum number of days necessary to
   calculate monthly dtr values}
+
+  \item{full.24.hrs.span_min}{logical, if set to
+  \code{FALSE} does not allow to shift minimum time to the
+  late hours of the day}
 
   \item{silent}{logical: if set to \code{TRUE} suppresses
   any warning issue}
@@ -55,6 +60,16 @@
   function, otherwise the average (\code{cal_table}) is
   used.
 
+  \code{full.24.hrs.span_min} is \code{TRUE} as default. If
+  must be set to \code{FALSE} only if minimum values of the
+  daily series have been calculated on a restricted time
+  band, which is included in \code{band_min} (see function
+  \code{par_calibration}). If this is the case, the minimum
+  of the interpolated curve will always fall within
+  \code{band_min} (early hours of the day). If this option
+  is erroneously chosen, errors as large as 0.6 deg C can
+  arise in the average of mean daily T.
+
   Tmin of the day before the first is set = to Tmin of the
   first day and Tmin of the day after the last = Tmin of
   the last day.
@@ -64,6 +79,7 @@
   \code{time_min} are = Tmin.
 }
 \examples{
+library(Interpol.T)
 data(Trentino_hourly_T)
 stations <- c("T0001","T0010","T0129")
 # interpolation of temperature for series T0001 and T0129, from 2004 to 2005

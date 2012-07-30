@@ -18,6 +18,7 @@ NULL
 #' @param tab_calibr  "hour" parameter calibration table for the specific series. See \code{\link{par_calibration}}
 #' @param dtr_month  monthly daily thermal range table (see function \code{Mo.Th.Ra.})
 #' @param ratio_dtr  parameter for the choice of the night curve shape; it is \code{NULL} if no calibration_shape is passed to the function by \code{Th_int_series}
+#' @param late_min  logical; allows to shift the time of occurrence of minima to the late hours of the day (assumes the value of \code{full.24.hrs.span_min}, passed by functions \code{Th_int_series)} and \code{shape_calibration})
 
 #' @export 
 
@@ -44,7 +45,9 @@ NULL
 #'
 #' Tmin of the day before the first is set = to Tmin of the first day and Tmin of the day after the last = Tmin of the last day.
 #'
-#' Since the first value of T at sunset (of the day before) is \code{NULL}, the first hourly values produced till \code{time_min} are = Tmin.
+#' If T from sunset falls below the minimum of the day (temptatively attributed to \code{time_min}), an adjustement is done: the early hours assume a constant T = T[00] and the minimum is shifted so that T[23] = \code{Tmin} for that day
+#'
+#' Since the very first value of T series at sunset (of the day before) is \code{NULL}, the first hourly values produced till \code{time_min} are =  \code{Tmin} of the day.
 
 
 #' @seealso \code{\link{Th_int_list}}
@@ -57,25 +60,30 @@ NULL
 #########################################################
 
 
-Th_interp<-function(Tmin, Tmax, Tsuns=NULL, Th_24_before=NULL, day, tab_calibr, dtr_month=NULL, ratio_dtr=NULL)
+Th_interp<-function(Tmin, Tmax, Tsuns=NULL, Th_24_before=NULL, day, tab_calibr, dtr_month=NULL, ratio_dtr=NULL, late_min=TRUE)
 
 {
 
+options(warn=-1)
 Th<-NULL
 mm<-Tmin$month[day]
 Tn<-Tmin$T[day] 
 Tx<-Tmax$T[day] 
-Tsuns_d.before<-Tsuns
+if(is.null(Tsuns))
+ Tsuns_d.before <- Tn + 1.0 else Tsuns_d.before<-Tsuns
+if(is.null(Th_24_before))
+ Th_24_before <- Tn
 if(!is.na(Tmin[day+1,4])) Tn_after<-Tmin$T[day+1] else Tn_after<-Tmin$T[day]
 if(!is.null(ratio_dtr)) {
  cloudy_morning<-!is.na(Tx-Tn) & (Tx-Tn)/dtr_month[Tmin$month[day]]<=ratio_dtr  
  cloudy_night<-!is.na(Tx-Tn_after) & (Tx-Tn_after)/dtr_month[Tmin$month[day]]<=ratio_dtr  }
-Tsuns<-Tx - tab_calibr$C_m[mm]*(Tx-Tn_after)  
+if(late_min==FALSE) # Tmin has been calculated (and must fall) at early hours
+ Tsuns<- Tx - tab_calibr$C_m[mm]*(Tx-Tn_after) else  # Tmin cal also fall at late hours
+ Tsuns<- min(max(Tx - tab_calibr$C_m[mm]*(Tx-Tn_after), Th_24_before+2.0, na.rm=TRUE), Tx, na.rm=TRUE)
+if(!is.na(Tsuns) & !is.null(Tsuns) & (Tsuns==Inf | Tsuns== - Inf)) Tsuns<-NA
 time_min<-tab_calibr$time_min[mm]
 time_max<-tab_calibr$time_max[mm]
 time_suns<-tab_calibr$time_suns[mm]
-if(is.null(Th_24_before))
- Th_24_before <- Tn
 
 # begins interpolation
 
@@ -104,17 +112,25 @@ b<-(Tn_after - Tsuns) / ((time_min + 24-time_suns)^z)
 for(h in time_suns:23)
  Th[h+1]<-Tsuns + b*((h-time_suns)^z)
 Th_24_before<-Tsuns + b*((24-time_suns)^z)
+
 # checks if T[23] is lower than Tmin: in this case, re-calculates the last period
-if(!is.na(Th[24] < Tn) &  Th[24] < Tn)
+if(late_min == TRUE & !is.na(Th[24] < Tn) &  Th[24] < Tn)
 {
 b<-(Tn - Tsuns) / ((23-time_suns)^z) 
 for(h in time_suns:23)
  Th[h+1]<-Tsuns + b*((h-time_suns)^z)
 Th_24_before<-Tsuns + b*((24-time_suns)^z)
+
+# h = 00 to min, new
+Th[1:time_min]<-Tsuns_d.before
+
+# h = min to max, new
+for(h in time_min:time_max) 
+ Th[h+1]<-Th[time_min]+(Tx-Th[time_min])/2 * ( 1 + sin((h-time_min)/(time_max-time_min)*pi - pi/2)) 
+
 }
 
 Th_list<-list(Th,Tsuns,Th_24_before); names(Th_list)<-c("Th", "Tsuns","Th_24_before")
-
 return(Th_list)
 
 }
