@@ -56,7 +56,10 @@ NULL
 #' 
 #' stations <- c("T0001","T0010","T0129")
 #' 
-#' calibration_shape <- shape_calibration(meas = h_d_t[h_d_t$V1 %in% stations,], cal_times_list = calibration_l[stations], band_min = 0:23, band_max = 0:23, ratio_dtr_range = c(0,4), min_mo.length=21)
+#' calibration_shape <- shape_calibration(meas = h_d_t[h_d_t$V1 %in% stations,], 
+#' 						cal_times_list = calibration_l[stations], 
+#'                      band_min = 0:23, band_max = 0:23, ratio_dtr_range = c(0,4), 
+#' 						min_mo.length=21)
 
 
 #' @seealso \code{\link{par_calibration}}, \code{\link{Th_interp}}
